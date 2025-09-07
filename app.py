@@ -1,12 +1,26 @@
 import streamlit as st
 import requests
 import random
-import pygame
-import threading
+import base64
 
 # -------- Audio files --------
-WIN_SOUND = "win.mp3.wav"
-LOSE_SOUND = "lose.mp3.wav"
+WIN_SOUND = "win.mp3"   # make sure these files exist in your repo
+LOSE_SOUND = "lose.mp3"
+
+# -------- Play sounds using HTML autoplay --------
+def play_sound(file_path):
+    try:
+        with open(file_path, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            md = f"""
+                <audio autoplay>
+                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                </audio>
+            """
+            st.markdown(md, unsafe_allow_html=True)
+    except Exception as e:
+        st.warning(f"Audio error: {e}")
 
 # -------- Hangman visuals --------
 FACES = ["", "🙂", "🙂", "😯", "😟", "😟", "😵"]
@@ -16,20 +30,6 @@ COLORS = ["#e0e0e0", "#8bc34a", "#cddc39", "#ffeb3b",
 # -------- API config --------
 API_URL = "https://api.api-ninjas.com/v1/riddles"
 API_KEY = "xDq89VT+ktKUGGhC0o7Mjg==ad8fhAnhP5M6ray4"
-
-# -------- Init pygame --------
-if not pygame.mixer.get_init():
-    pygame.mixer.init()
-
-def play_sound(sound_file):
-    def _play():
-        try:
-            pygame.mixer.music.stop()
-            pygame.mixer.music.load(sound_file)
-            pygame.mixer.music.play()
-        except Exception as e:
-            print("Audio Error:", e)
-    threading.Thread(target=_play, daemon=True).start()
 
 # -------- Session state --------
 for key, default in {
@@ -139,7 +139,7 @@ if st.session_state.question:
     def submit_guess():
         letter = st.session_state.guess_input
         check_guess(letter)
-        st.session_state.guess_input = ""  # safe reset
+        st.session_state.guess_input = ""  # reset
 
     st.text_input("Enter a letter", max_chars=1, key="guess_input", on_change=submit_guess)
 
